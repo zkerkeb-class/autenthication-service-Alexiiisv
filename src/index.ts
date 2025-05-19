@@ -38,7 +38,7 @@ passport.use(
       userInfoURL: "https://openidconnect.googleapis.com/v1/userinfo",
       clientID: GOOGLE_CLIENT_ID!,
       clientSecret: GOOGLE_CLIENT_SECRET!,
-      callbackURL: "http://localhost:3000/auth/callback",
+      callbackURL: "http://localhost:3001/auth/callback",
       scope: ["openid", "profile", "email"],
     } as OpenIDConnectStrategyOptions,
     (issuer: string, profile: Profile, cb: VerifyCallback) => {
@@ -76,6 +76,11 @@ app.get("/logout", (req, res) => {
   req.logout({}, () => {
     res.redirect("/");
   });
+});
+
+// Basic health check
+app.get("/health", (_req, res) => {
+  res.json({ status: "OK", service: "notification-service" });
 });
 
 app.listen(PORT, () =>
