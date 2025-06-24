@@ -19,21 +19,23 @@ export async function authCallback(req: Request, res: Response) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, email, password })
       });
-      // On ignore volontairement la réponse (l'utilisateur existe peut-être déjà)
+      
+      // Génération du token JWT
+      const token = jwt.sign(
+        { username, email },
+        process.env.JWT_SECRET || "default_secret",
+        { expiresIn: "1h", audience: GOOGLE_CLIENT_ID }
+      );
+
+      // Renvoie le token dans la réponse JSON
+      res.json({ token });
     } catch (err) {
-      // On ignore l'erreur si l'utilisateur existe déjà
+      console.error("Erreur lors de la création de l'utilisateur:", err);
+      res.status(500).json({ error: "Erreur lors de la création de l'utilisateur" });
     }
   }
 
-  // Génération du token JWT
-  const token = jwt.sign(
-    { username, email },
-    process.env.JWT_SECRET || "default_secret",
-    { expiresIn: "1h", audience: GOOGLE_CLIENT_ID }
-  );
-
-  // Renvoie le token dans la réponse JSON
-  res.json({ token });
+  
 }
 
 export function logout(req: Request, res: Response) {
