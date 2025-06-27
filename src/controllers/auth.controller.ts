@@ -14,15 +14,69 @@ export async function authCallback(req: Request, res: Response) {
   // Appel à l'API bdd-service pour créer l'utilisateur
   if (username && email) {
     try {
-      await fetch("http://localhost:3003/api/users", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, email, password })
+      let userId: number;
+      let userData: any;
+
+      // D'abord, essayer de récupérer l'utilisateur existant
+      const searchResponse = await fetch(`http://localhost:3003/api/users/search?email=${encodeURIComponent(email)}`, {
+        method: "GET",
+        headers: { "Content-Type": "application/json" }
       });
+
+      if (searchResponse.ok) {
+        const searchData = await searchResponse.json();
+        
+        if (searchData.data && searchData.data.length > 0) {
+          // L'utilisateur existe déjà
+          userData = searchData.data[0];
+          userId = userData.id;
+          console.log("Utilisateur existant trouvé:", userId);
+        } else {
+          // L'utilisateur n'existe pas, le créer
+          const createResponse = await fetch("http://localhost:3003/api/users", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ username, email, password })
+          });
+          
+          if (!createResponse.ok) {
+            throw new Error(`Failed to create user: ${createResponse.statusText}`);
+          }
+
+          const createData = await createResponse.json();
+          userData = createData.data;
+          userId = userData.id;
+          console.log("Nouvel utilisateur créé:", userId);
+        }
+      } else {
+        // Si la recherche échoue, essayer de créer l'utilisateur
+        const createResponse = await fetch("http://localhost:3003/api/users", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ username, email, password })
+        });
+        
+        if (!createResponse.ok) {
+          throw new Error(`Failed to create user: ${createResponse.statusText}`);
+        }
+
+        const createData = await createResponse.json();
+        userData = createData.data;
+        userId = userData.id;
+        console.log("Nouvel utilisateur créé (recherche échouée):", userId);
+      }
+
+      if (!userId) {
+        throw new Error('User ID not found or returned');
+      }
       
-      // Génération du token JWT
+      // Génération du token JWT avec l'ID utilisateur
       const token = jwt.sign(
-        { username, email },
+        { 
+          username, 
+          email, 
+          userId 
+        },
         process.env.JWT_SECRET || "default_secret",
         { expiresIn: "1h", audience: GOOGLE_CLIENT_ID }
       );
@@ -30,8 +84,9 @@ export async function authCallback(req: Request, res: Response) {
       // Redirection vers le frontend avec le token
       res.redirect(`http://localhost:3000/auth-callback?token=${token}`);
     } catch (err) {
-      console.error("Erreur lors de la création de l'utilisateur:", err);
-      res.redirect(`http://localhost:3000/auth-callback?error=Erreur lors de la création de l'utilisateur`);
+      console.error("Erreur lors de l'authentification:", err);
+      const errorMessage = err instanceof Error ? err.message : 'Erreur inconnue';
+      res.redirect(`http://localhost:3000/auth-callback?error=Erreur lors de l'authentification: ${errorMessage}`);
     }
   } else {
     res.redirect(`http://localhost:3000/auth-callback?error=Informations utilisateur manquantes`);
@@ -42,4 +97,4 @@ export function logout(req: Request, res: Response) {
   req.logout({}, () => {
     res.redirect("/");
   });
-} 
+}
