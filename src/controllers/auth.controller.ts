@@ -27,15 +27,15 @@ export async function authCallback(req: Request, res: Response) {
         { expiresIn: "1h", audience: GOOGLE_CLIENT_ID }
       );
 
-      // Renvoie le token dans la réponse JSON
-      res.json({ token });
+      // Redirection vers le frontend avec le token
+      res.redirect(`http://localhost:3000/auth-callback?token=${token}`);
     } catch (err) {
       console.error("Erreur lors de la création de l'utilisateur:", err);
-      res.status(500).json({ error: "Erreur lors de la création de l'utilisateur" });
+      res.redirect(`http://localhost:3000/auth-callback?error=Erreur lors de la création de l'utilisateur`);
     }
+  } else {
+    res.redirect(`http://localhost:3000/auth-callback?error=Informations utilisateur manquantes`);
   }
-
-  
 }
 
 export function logout(req: Request, res: Response) {
