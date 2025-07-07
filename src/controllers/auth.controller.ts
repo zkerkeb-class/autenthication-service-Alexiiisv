@@ -1,10 +1,10 @@
 import jwt from "jsonwebtoken";
-import { Request, Response } from "express";
+import { Request, Response, RequestHandler } from "express";
 import { GOOGLE_CLIENT_ID } from "../config/env";
 const fetch = require("node-fetch");
 
 
-export async function authCallback(req: Request, res: Response) {
+export const authCallback: RequestHandler = async (req: Request, res: Response) => {
   // Récupérer les infos du profil Google
   const user = req.user as any;
   const username = user?.displayName || user?.name || user?.emails?.[0]?.value?.split('@')[0] || "user";
@@ -30,7 +30,6 @@ export async function authCallback(req: Request, res: Response) {
           // L'utilisateur existe déjà
           userData = searchData.data[0];
           userId = userData.id;
-          console.log("Utilisateur existant trouvé:", userId);
         } else {
           // L'utilisateur n'existe pas, le créer
           const createResponse = await fetch("http://localhost:3003/api/users", {
@@ -93,7 +92,7 @@ export async function authCallback(req: Request, res: Response) {
   }
 }
 
-export function logout(req: Request, res: Response) {
+export const logout: RequestHandler = (req: Request, res: Response) => {
   req.logout({}, () => {
     res.redirect("/");
   });

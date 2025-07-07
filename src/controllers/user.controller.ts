@@ -1,6 +1,9 @@
-import { Request, Response } from "express";
+import { Request, Response, RequestHandler } from "express";
 
-export function getProfile(req: Request, res: Response) {
-  if (!req.isAuthenticated()) return res.redirect("/");
+export const getProfile: RequestHandler = (req: Request, res: Response) => {
+  if (!req.isAuthenticated()) {
+    res.redirect("/");
+    return;
+  }
   res.json(req.user);
 } 

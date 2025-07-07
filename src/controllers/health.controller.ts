@@ -1,5 +1,5 @@
-import { Request, Response } from "express";
+import { Request, Response, RequestHandler } from "express";
 
-export function healthCheck(_req: Request, res: Response) {
+export const healthCheck: RequestHandler = (_req: Request, res: Response) => {
   res.json({ status: "OK", service: "notification-service" });
 } 
