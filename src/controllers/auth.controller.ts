@@ -16,6 +16,7 @@ export const authCallback: RequestHandler = async (req: Request, res: Response) 
     try {
       let userId: number;
       let userData: any;
+      let premium: boolean = false;
 
       // D'abord, essayer de récupérer l'utilisateur existant
       const searchResponse = await fetch(`http://localhost:3003/api/users/search?email=${encodeURIComponent(email)}`, {
@@ -29,7 +30,9 @@ export const authCallback: RequestHandler = async (req: Request, res: Response) 
         if (searchData.data && searchData.data.length > 0) {
           // L'utilisateur existe déjà
           userData = searchData.data[0];
+          console.log("🚀 ~ authCallback ~ userData:", userData)
           userId = userData.id;
+          premium = userData.premium;
         } else {
           // L'utilisateur n'existe pas, le créer
           const createResponse = await fetch("http://localhost:3003/api/users", {
@@ -74,7 +77,8 @@ export const authCallback: RequestHandler = async (req: Request, res: Response) 
         { 
           username, 
           email, 
-          userId 
+          userId,
+          premium
         },
         process.env.JWT_SECRET || "default_secret",
         { expiresIn: "1h", audience: GOOGLE_CLIENT_ID }
